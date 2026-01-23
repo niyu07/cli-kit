@@ -1,11 +1,32 @@
-#!/bin/sh
+#!/bin/bash
 
 BASE="$HOME/.cli-kit"
 mkdir -p "$BASE"
 
 DATE=$(date +%F)
 
+show_help() {
+  cat << 'EOF'
+cli-kit
+
+Usage:
+  cli-kit help              Show this help
+  cli-kit memo [folder]     Create or edit today's memo
+  cli-kit list              Show memo list
+  cli-kit open              Open a memo by number
+
+Examples:
+  cli-kit memo work
+  cli-kit list
+  cli-kit open
+EOF
+}
+
 case "$1" in
+  help)
+    show_help
+    ;;
+
   memo)
     DIR="${2:-default}"
     mkdir -p "$BASE/$DIR"
@@ -27,17 +48,20 @@ case "$1" in
 
       for file in "$dir"/*.md; do
         [ -f "$file" ] || continue
+
         date=$(basename "$file" .md)
         title=$(sed -n '1s/^# //p' "$file")
         [ -z "$title" ] && title="(no title)"
+
         echo "  $date - $title"
       done
     done
     ;;
 
   open)
-	  TMP=$(mktemp)
+    TMP=$(mktemp)
     i=1
+
     for dir in "$BASE"/*; do
       [ -d "$dir" ] || continue
       echo "[$(basename "$dir")]"
@@ -50,8 +74,7 @@ case "$1" in
         [ -z "$title" ] && title="(no title)"
 
         echo "$i) $date - $title"
-        FILES="$FILES
-$file"
+        echo "$file" >> "$TMP"
         i=$((i + 1))
       done
     done
@@ -59,10 +82,11 @@ $file"
     echo "Select a number:"
     read num
 
-    TARGET=$(echo "$FILES" | sed -n "${num}p")
+    TARGET=$(sed -n "${num}p" "$TMP")
+    rm -f "$TMP"
 
     if [ -z "$TARGET" ]; then
-      echo "No such number"
+      echo "Invalid number"
       exit 1
     fi
 
@@ -70,10 +94,7 @@ $file"
     ;;
 
   *)
-    echo "Usage:"
-    echo "  cli-kit memo [file name]"
-    echo "  cli-kit list"
-    echo "  cli-kit open"
+    show_help
     ;;
-
 esac
+
