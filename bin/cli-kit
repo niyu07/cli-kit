@@ -1,1 +1,3 @@
-exec "$(dirname "$0")/../src/main.sh" "$@"
+#!/bin/bash
+DIR="$(cd "$(dirname "$0")" && pwd)"
+exec bash "$DIR/../src/main.sh" "$@"
